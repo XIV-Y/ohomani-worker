@@ -1,0 +1,62 @@
+name = "oho-worker-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# 開発環境 (デフォルト)
+[[r2_buckets]]
+binding = "OHO_AUDIO_BUCKET"
+bucket_name = "oho-audio-bucket-dev"
+preview_bucket_name = "oho-audio-bucket-preview"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "oho-audio-db-dev"
+database_id = "407ee8b3-decb-485c-a167-ebeb3f072898"
+
+[vars]
+ALLOWED_ORIGINS = "*"
+MAX_FILE_SIZE = "52428800"
+ALLOWED_FILE_TYPES = "audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4"
+ENVIRONMENT = "development"
+SECRET_SALT = "Oho_Secret_Salt_Dev_2025"
+
+# ステージング環境
+[env.staging]
+name = "oho-worker-api-staging"
+
+[[env.staging.r2_buckets]]
+binding = "OHO_AUDIO_BUCKET"
+bucket_name = "oho-audio-bucket-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "oho-audio-db-staging"
+database_id = "c9d0d834-a750-4f60-b392-cce4d8365b07"
+
+[env.staging.vars]
+ALLOWED_ORIGINS = "https://staging.ohomani.com"
+MAX_FILE_SIZE = "52428800"
+ALLOWED_FILE_TYPES = "audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4"
+ENVIRONMENT = "staging"
+SECRET_SALT = "Oho_Secret_Salt_Staging_2025"
+
+# 本番環境
+[env.production]
+name = "oho-worker-api-production"
+
+[[env.production.r2_buckets]]
+binding = "OHO_AUDIO_BUCKET"
+bucket_name = "oho-audio-bucket-prod"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "oho-audio-db-prod"
+database_id = "29bacf01-7ac9-4857-816a-f2a9c0fa8676"
+
+# 本番用のソルトは後でSecretsで上書き
+[env.production.vars]
+ALLOWED_ORIGINS = "https://yourdomain.com"
+MAX_FILE_SIZE = "52428800"
+ALLOWED_FILE_TYPES = "audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4"
+ENVIRONMENT = "production"
+SECRET_SALT = "PLACEHOLDER_WILL_BE_OVERRIDDEN_BY_SECRET"
