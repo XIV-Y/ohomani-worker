@@ -1,4 +1,4 @@
-name = "oho-worker-api"
+name = "ohomani-worker-staging"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
