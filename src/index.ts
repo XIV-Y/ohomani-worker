@@ -94,19 +94,60 @@ export default {
 
     // CORS設定
     const origin = request.headers.get('Origin');
-    const allowedOrigins = ALLOWED_ORIGINS === "*" ? "*" : ALLOWED_ORIGINS.split(',');
-    const corsOrigin = ALLOWED_ORIGINS === "*" ? "*" : 
-      (allowedOrigins.includes(origin || "") ? origin : null);
+    const referer = request.headers.get('Referer');
+    
+    let isOriginAllowed = false;
+    let corsOrigin = null;
+
+    if (ALLOWED_ORIGINS === "*") {
+      // 開発環境の場合のみワイルドカード許可
+      isOriginAllowed = config.isDevelopment;
+      corsOrigin = "*";
+    } else {
+      const allowedOrigins = ALLOWED_ORIGINS.split(',').map(o => o.trim());
+      
+      // Originヘッダーのチェック
+      if (origin && allowedOrigins.includes(origin)) {
+        isOriginAllowed = true;
+        corsOrigin = origin;
+      }
+      
+      // Refererヘッダーのチェック（ブラウザ直接アクセス対応）
+      if (!isOriginAllowed && referer) {
+        const refererUrl = new URL(referer);
+        const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
+        if (allowedOrigins.includes(refererOrigin)) {
+          isOriginAllowed = true;
+          corsOrigin = refererOrigin;
+        }
+      }
+    }
 
     const corsHeaders = {
-      'Access-Control-Allow-Origin': corsOrigin || allowedOrigins[0],
+      'Access-Control-Allow-Origin': corsOrigin || 'null',
       'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',
     };
 
     if (request.method === 'OPTIONS') {
+      if (!isOriginAllowed && !config.isDevelopment) {
+        return new Response('Forbidden', { 
+          status: 403,
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
       return new Response(null, { headers: corsHeaders });
+    }
+
+    if (!config.isDevelopment && !isOriginAllowed) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Access denied: Invalid origin'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const url = new URL(request.url);
@@ -224,7 +265,9 @@ export default {
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
           });
           
-        } catch {
+        } catch (e) {
+          console.error(e)
+
           return new Response(JSON.stringify({
             success: false,
             error: 'タグ取得に失敗しました'
@@ -330,7 +373,9 @@ export default {
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
           });
           
-        } catch {
+        } catch (e) {
+          console.error(e)
+
           return new Response(JSON.stringify({
             success: false,
             error: '投稿一覧の取得に失敗しました'
@@ -486,7 +531,8 @@ export default {
             });
           }
           
-        } catch {
+        } catch (e) {
+          console.error(e)
           return new Response(JSON.stringify({
             success: false,
             error: '音声アップロードに失敗しました'
@@ -829,6 +875,7 @@ export default {
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
           });
         } catch (error) {
+          console.error(error)
           return new Response(JSON.stringify({
             success: false,
             error: error

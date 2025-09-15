@@ -1,3 +1,5 @@
+-- Migration number: 0001 	 2025-09-15T13:00:00.000Z
+
 -- Posts table - メイン投稿テーブル
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY,

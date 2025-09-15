@@ -2,6 +2,9 @@ name = "oho-worker-api"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
+[observability]
+enabled = true
+
 # 開発環境 (デフォルト)
 [[r2_buckets]]
 binding = "OHO_AUDIO_BUCKET"
