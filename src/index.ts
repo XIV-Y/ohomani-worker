@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { deletePost, getPost } from './database';
+import { deletePost, getPost, createComment, getCommentsByPost, getRepliesByParent, getComment } from './database';
 import { verifyPassword } from './utils/password';
 
 export interface Env {
@@ -951,6 +951,146 @@ export default {
           return new Response(JSON.stringify({
             success: false,
             error: '再生記録に失敗しました'
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
+      }
+
+
+      // コメント投稿
+      if (request.method === 'POST' && url.pathname.startsWith('/api/posts/') && url.pathname.endsWith('/comments')) {
+        const postId = url.pathname.split('/')[3];
+        
+        try {
+          const requestData = await request.json();
+          const { content, xId, userName, parentCommentId, tripKey } = requestData as any;
+
+          if (!content || content.trim().length === 0) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: 'コメント内容を入力してください'
+            }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            });
+          }
+
+          if (content.length > 500) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: 'コメントは500文字以内で入力してください'
+            }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            });
+          }
+
+          // 投稿の存在確認
+          const post = await getPost(env.DB, postId);
+          if (!post) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: '投稿が見つかりません'
+            }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            });
+          }
+
+          // 親コメントがある場合の階層チェック
+          if (parentCommentId) {
+            const parentComment = await getComment(env.DB, parentCommentId);
+            if (!parentComment) {
+              return new Response(JSON.stringify({
+                success: false,
+                error: '返信先のコメントが見つかりません'
+              }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json', ...corsHeaders }
+              });
+            }
+
+            // 3階層以上の防止
+            if (parentComment.parent_comment_id) {
+              return new Response(JSON.stringify({
+                success: false,
+                error: '返信は2階層までです'
+              }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', ...corsHeaders }
+              });
+            }
+          }
+
+          let tripHash = null;
+          if ((xId || userName) && tripKey) {
+            tripHash = await generateTrip(tripKey, config.secretSalt);
+          }
+
+          const commentId = crypto.randomUUID();
+
+          await createComment(env.DB, {
+            id: commentId,
+            post_id: postId,
+            parent_comment_id: parentCommentId || null,
+            user_name: userName || null,
+            x_id: xId || null,
+            trip_hash: tripHash,
+            content: content.trim()
+          });
+
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'コメントが投稿されました',
+            commentId: commentId
+          }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+
+        } catch (error) {
+          console.error('コメント投稿エラー:', error);
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'コメント投稿に失敗しました'
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
+      }
+
+      // コメント一覧取得
+      if (request.method === 'GET' && url.pathname.startsWith('/api/posts/') && url.pathname.endsWith('/comments')) {
+        const postId = url.pathname.split('/')[3];
+        
+        try {
+          const comments = await getCommentsByPost(env.DB, postId);
+          
+          // 各コメントの返信を取得
+          const commentsWithReplies = await Promise.all(
+            comments.map(async (comment) => {
+              const replies = await getRepliesByParent(env.DB, comment.id);
+              return {
+                ...comment,
+                replies: replies
+              };
+            })
+          );
+
+          return new Response(JSON.stringify({
+            success: true,
+            comments: commentsWithReplies
+          }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+
+        } catch (error) {
+          console.error('コメント取得エラー:', error);
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'コメント取得に失敗しました'
           }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
