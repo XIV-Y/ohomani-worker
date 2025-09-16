@@ -1038,7 +1038,8 @@ export default {
             user_name: userName || null,
             x_id: xId || null,
             trip_hash: tripHash,
-            content: content.trim()
+            content: content.trim(),
+            created_at: getJSTTimestamp()
           });
 
           return new Response(JSON.stringify({

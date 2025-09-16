@@ -63,6 +63,7 @@ export interface CreateCommentData {
   x_id: string | null;
   trip_hash: string | null;
   content: string;
+  created_at: string;
 }
 
 /**
@@ -112,8 +113,8 @@ export async function deletePost(db: any, id: string): Promise<D1Result> {
 export async function createComment(db: any, data: CreateCommentData): Promise<D1Result> {
   const query = `
     INSERT INTO comments (
-      id, post_id, parent_comment_id, user_name, x_id, trip_hash, content
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      id, post_id, parent_comment_id, user_name, x_id, trip_hash, content, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   return await db.prepare(query).bind(
@@ -123,7 +124,8 @@ export async function createComment(db: any, data: CreateCommentData): Promise<D
     data.user_name,
     data.x_id,
     data.trip_hash,
-    data.content
+    data.content,
+    data.created_at
   ).run();
 }
 
