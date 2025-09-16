@@ -445,7 +445,21 @@ export default {
             });
           }
 
-          const allowedTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/mp4'];
+          const allowedTypes =  [
+            'audio/mp3',
+            'audio/mpeg',
+            'audio/wav',
+            'audio/m4a',
+            'audio/x-m4a',
+            'audio/mp4',
+            'audio/aac',
+            'audio/ogg',
+            'audio/webm',
+            'audio/3gpp',
+            'audio/3gp',
+            'audio/amr',
+          ]
+
           if (!allowedTypes.includes(audioFile.type)) {
             return new Response(JSON.stringify({
               success: false,
@@ -620,6 +634,10 @@ export default {
 
       if (request.method === 'POST' && url.pathname.startsWith('/api/posts/') && url.pathname.endsWith('/like')) {
         const postId = url.pathname.split('/')[3];
+
+        console.log('Data:', { 
+          url
+        });
         
         try {
           const post = await env.DB.prepare('SELECT id FROM posts WHERE id = ?').bind(postId).first();
@@ -665,6 +683,10 @@ export default {
       }
 
       if (request.method === 'GET' && url.pathname.startsWith('/api/post/')) {
+        console.log('Data:', { 
+          url
+        });
+
         const pathParts = url.pathname.split('/');
         const postId = pathParts[3];
         
@@ -790,6 +812,10 @@ export default {
 
       if (request.method === 'GET' && url.pathname.startsWith('/api/audio/')) {
         const filename = url.pathname.replace('/api/audio/', '');
+
+        console.log('Data:', { 
+          url
+        });
         
         try {
           const object = await env.OHO_AUDIO_BUCKET.get(filename);
@@ -862,27 +888,6 @@ export default {
         } catch (error) {
           console.error('Audio serving error:', error);
           return new Response('Internal server error', { status: 500, headers: corsHeaders });
-        }
-      }
-
-      if (request.method === 'GET' && url.pathname === '/api/debug/posts') {
-        try {
-          const posts = await env.DB.prepare('SELECT * FROM posts ORDER BY created_at DESC').all();
-          return new Response(JSON.stringify({
-            success: true,
-            posts: posts.results || []
-          }), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders }
-          });
-        } catch (error) {
-          console.error(error)
-          return new Response(JSON.stringify({
-            success: false,
-            error: error
-          }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders }
-          });
         }
       }
 

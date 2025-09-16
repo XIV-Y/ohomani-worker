@@ -25,7 +25,7 @@ SECRET_SALT = "Oho_Secret_Salt_Dev_2025"
 
 # ステージング環境
 [env.staging]
-name = "oho-worker-api-staging"
+name = "ohomani-worker-api-staging"
 
 [[env.staging.r2_buckets]]
 binding = "OHO_AUDIO_BUCKET"
