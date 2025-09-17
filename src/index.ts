@@ -906,30 +906,7 @@ export default {
             });
           }
 
-          const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-          const existingPlay = await env.DB.prepare(`
-            SELECT id FROM play_records 
-            WHERE post_id = ? AND client_ip = ? AND created_at > ?
-          `).bind(postId, clientIP, twelveHoursAgo).first();
-
-          if (existingPlay) {
-            const playCount = await env.DB.prepare(`
-              SELECT play_count FROM posts WHERE id = ?
-            `).bind(postId).first();
-
-            return new Response(JSON.stringify({
-              success: true,
-              alreadyPlayed: true,
-              playCount: playCount?.play_count || 0
-            }), {
-              headers: { 'Content-Type': 'application/json', ...corsHeaders }
-            });
-          }
-
-          await env.DB.prepare(`
-            INSERT INTO play_records (post_id, client_ip, created_at) VALUES (?, ?, ?)
-          `).bind(postId, clientIP, getJSTTimestamp()).run();
-
+          // 単純に再生回数を増加（IPアドレスチェック削除）
           await env.DB.prepare(`
             UPDATE posts SET play_count = play_count + 1 WHERE id = ?
           `).bind(postId).run();

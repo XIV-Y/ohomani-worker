@@ -48,19 +48,6 @@ CREATE TABLE IF NOT EXISTS post_tags (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
--- Play records table - 再生履歴
-CREATE TABLE IF NOT EXISTS play_records (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  post_id TEXT NOT NULL,
-  client_ip TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-);
-
--- Play records indexes
-CREATE INDEX IF NOT EXISTS idx_play_records_post_id ON play_records(post_id);
-CREATE INDEX IF NOT EXISTS idx_play_records_ip_time ON play_records(client_ip, created_at);
-
 -- 初期タグデータ
 INSERT OR IGNORE INTO tags (name) VALUES 
 ('オホ声'),
