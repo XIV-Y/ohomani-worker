@@ -411,7 +411,7 @@ export default {
           }
 
           let tripHash = null;
-          if ((xId || userName) && tripKey) {
+          if (tripKey) { 
             tripHash = await generateTrip(tripKey, config.secretSalt);
           }
 
@@ -419,16 +419,6 @@ export default {
             return new Response(JSON.stringify({
               success: false,
               error: '必須項目が入力されていません'
-            }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json', ...corsHeaders }
-            });
-          }
-
-          if (xId && !tripKey) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: 'Xアカウントを入力した場合、トリップキーは必須です'
             }), {
               status: 400,
               headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -1002,7 +992,7 @@ export default {
           }
 
           let tripHash = null;
-          if ((xId || userName) && tripKey) {
+          if (tripKey) {
             tripHash = await generateTrip(tripKey, config.secretSalt);
           }
 
