@@ -256,21 +256,76 @@ export default {
 
       if (request.method === 'GET' && url.pathname === '/api/tags') {
         try {
-          const result = await env.DB.prepare('SELECT * FROM tags ORDER BY name ASC').all();
+          const result = await env.DB.prepare(`
+            SELECT t.*, tc.name as category_name, tc.display_order 
+            FROM tags t
+            LEFT JOIN tag_categories tc ON t.category_id = tc.id
+            ORDER BY tc.display_order ASC, tc.name ASC, t.name ASC
+          `).all();
+          
+          const tagsWithCategories = result.results.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            category_id: row.category_id,
+            created_at: row.created_at,
+            category: row.category_id ? {
+              id: row.category_id,
+              name: row.category_name,
+              display_order: row.display_order
+            } : null
+          }));
           
           return new Response(JSON.stringify({
             success: true,
-            tags: result.results
+            tags: tagsWithCategories
           }), {
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
           });
-          
         } catch (e) {
           console.error(e)
-
           return new Response(JSON.stringify({
             success: false,
             error: 'タグ取得に失敗しました'
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
+      }
+
+      // カテゴリ別タグ取得API
+      if (request.method === 'GET' && url.pathname === '/api/tags-by-category') {
+        try {
+          const categories = await env.DB.prepare('SELECT * FROM tag_categories ORDER BY display_order ASC').all();
+          const tags = await env.DB.prepare('SELECT * FROM tags ORDER BY name ASC').all();
+          
+          const categorizedTags = categories.results.map((category: any) => ({
+            ...category,
+            tags: tags.results.filter((tag: any) => tag.category_id === category.id)
+          }));
+          
+          // カテゴリ未設定のタグ
+          const uncategorizedTags = tags.results.filter((tag: any) => !tag.category_id);
+          if (uncategorizedTags.length > 0) {
+            categorizedTags.push({
+              id: null,
+              name: 'その他',
+              display_order: 999,
+              tags: uncategorizedTags
+            });
+          }
+          
+          return new Response(JSON.stringify({
+            success: true,
+            categorizedTags
+          }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        } catch (e) {
+          console.error(e)
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'カテゴリ別タグ取得に失敗しました'
           }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -540,6 +595,28 @@ export default {
           return new Response(JSON.stringify({
             success: false,
             error: '音声アップロードに失敗しました'
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/tag-categories') {
+        try {
+          const result = await env.DB.prepare('SELECT * FROM tag_categories ORDER BY display_order ASC, name ASC').all();
+          
+          return new Response(JSON.stringify({
+            success: true,
+            categories: result.results
+          }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        } catch (e) {
+          console.error(e)
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'カテゴリ取得に失敗しました'
           }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', ...corsHeaders }

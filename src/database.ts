@@ -66,6 +66,21 @@ export interface CreateCommentData {
   created_at: string;
 }
 
+export interface TagCategory {
+  id: number;
+  name: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+  category_id: number | null;
+  created_at: string;
+  category?: TagCategory;
+}
+
 /**
  * 投稿を作成
  */
@@ -161,4 +176,31 @@ export async function getRepliesByParent(db: any, parentCommentId: string): Prom
 export async function getComment(db: any, id: string): Promise<Comment | null> {
   const result = await db.prepare('SELECT * FROM comments WHERE id = ?').bind(id).first();
   return result as Comment | null;
+}
+
+export async function getTagCategories(db: any): Promise<TagCategory[]> {
+  const result = await db.prepare('SELECT * FROM tag_categories ORDER BY display_order ASC, name ASC').all();
+  return result.results as TagCategory[];
+}
+
+export async function getTagsWithCategories(db: any): Promise<Tag[]> {
+  const result = await db.prepare(`
+    SELECT t.*, tc.name as category_name, tc.display_order 
+    FROM tags t
+    LEFT JOIN tag_categories tc ON t.category_id = tc.id
+    ORDER BY tc.display_order ASC, tc.name ASC, t.name ASC
+  `).all();
+  
+  return result.results.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    category_id: row.category_id,
+    created_at: row.created_at,
+    category: row.category_id ? {
+      id: row.category_id,
+      name: row.category_name,
+      display_order: row.display_order,
+      created_at: row.created_at
+    } : null
+  })) as Tag[];
 }
