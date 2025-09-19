@@ -901,7 +901,8 @@ export default {
                 'Content-Type': contentType,
                 'Content-Length': contentLength.toString(),
                 'Accept-Ranges': 'bytes',
-                'Cache-Control': 'public, max-age=3600',
+                'Cache-Control': 'public, max-age=3600, immutable',
+                'ETag': `"${filename}-${contentLength}"`,
                 ...corsHeaders
               }
             });
@@ -948,7 +949,8 @@ export default {
               'Content-Length': (end - start + 1).toString(),
               'Content-Range': contentRange,
               'Accept-Ranges': 'bytes',
-              'Cache-Control': 'public, max-age=3600',
+              'Cache-Control': 'public, max-age=3600, immutable',
+              'ETag': `"${filename}-${contentLength}"`,
               ...corsHeaders
             }
           });
